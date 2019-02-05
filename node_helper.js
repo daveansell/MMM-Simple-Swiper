@@ -28,8 +28,10 @@ module.exports = NodeHelper.create({
       if (leftDist <= threshold && rightDist <= threshold) {
         if (leftDist * distDiff <= rightDist) {
           this.sendSocketNotification("PAGE_INCREMENT", null);
+          this.sendSocketNotification("PAGE_ACTIVATE", null);
         } else if (rightDist * distDiff <= leftDist) {
           this.sendSocketNotification("PAGE_DECREMENT", null);
+          this.sendSocketNotification("PAGE_ACTIVATE", null);
         }
       }
     });
