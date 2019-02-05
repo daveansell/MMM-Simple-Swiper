@@ -16,7 +16,7 @@
 
 #define LEFT 0
 #define RIGHT 1
-#define NUM_SAMPLES 10
+#define NUM_SAMPLES 50
 
 #define NUM_SECONDS 2.0
 #define DEBUG 3
@@ -34,6 +34,7 @@ struct sensor_bundle {
   int trigger;
   int echo;
   int signal;
+  int maxDistance;
 };
 
 void signal_catcher(int sig) {
@@ -67,23 +68,30 @@ void *sensor_distance(struct sensor_bundle *sensor) {
   float distance[NUM_SAMPLES];
   long int start = (long int)time(NULL), end = (long int)time(NULL);
   long int elapsed = 0;
-
+  int c=0;
   for (i = 0; i < NUM_SAMPLES; i++) {
 
     digitalWrite(sensor->trigger, HIGH);
     delayMicroseconds(100);
     digitalWrite(sensor->trigger, LOW);
-
-    while (digitalRead(sensor->echo) == LOW)
+    start = 0;
+    end = micros();
+    while (digitalRead(sensor->echo) == LOW && start-end<6000)
       start = micros();
+      
 
-    while (digitalRead(sensor->echo) == HIGH)
+    while (digitalRead(sensor->echo) == HIGH && end-start<6000)
       end = micros();
 
     elapsed = end - start;
-    elapsed = end - start;
 
-    distance[i] = elapsed / 58;
+    int d = elapsed / 58;
+    if(d>0 && d<sensor->maxDistance){
+	    distance[c]=d;
+    }else{
+	    distance[c]=sensor->maxDistance;
+    }
+    c++;
   }
 
   // sort the values, then get their average
@@ -91,7 +99,7 @@ void *sensor_distance(struct sensor_bundle *sensor) {
   sensor->avg_dist = avg(distance);
 }
 
-void parse_JSON(struct sensor_bundle sensor[2], char *JSON, int *delay) {
+void parse_JSON(struct sensor_bundle sensor[2], char *JSON, int *delay, int *maxDistance) {
   int len = strlen(JSON) + 1;
   char config_type[20], config_value[15];
   int j = 0, k = 0, i = 0; // counters
@@ -116,6 +124,8 @@ void parse_JSON(struct sensor_bundle sensor[2], char *JSON, int *delay) {
       } else if (strstr(config_type, "delay")) {
         DEBUG_PRINT("DELAY: %d\n", atoi(config_value));
         *delay = atoi(config_value);
+      } else if (strstr(config_type, "maxDistance")){
+	*maxDistance = atoi(config_value);
       }
 
       // clear the entire array so no extra chars mess it up
@@ -136,11 +146,12 @@ int main(int argc, char *argv[]) {
 
   struct sensor_bundle sensor[2];
   int delay = 1000; // if nothing gets defined
-
+  int maxDistance = 175;
   // read and parse the config passed over from MMM-simple-swiper.js
 
-  parse_JSON(sensor, argv[1], &delay);
-
+  parse_JSON(sensor, argv[1], &delay, &maxDistance);
+  sensor[0].maxDistance=maxDistance;
+  sensor[1].maxDistance=maxDistance;
   int i = 0;
   pthread_t thread[2];
 
