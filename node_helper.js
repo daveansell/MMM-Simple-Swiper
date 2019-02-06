@@ -28,22 +28,22 @@ module.exports = NodeHelper.create({
       	if (leftDist <= threshold && rightDist >= threshold) {
 	  console.log(" left button pressed");
           this.sendSocketNotification("PAGE_INCREMENT", null);
-          this.sendSocketNotification("PAGE_ACTIVATE", null);
 	}else if (rightDist <= threshold && leftDist >= threshold) {
 	  console.log(" right button pressed");
 	  this.sendSocketNotification("PAGE_DECREMENT", null);
-	  this.sendSocketNotification("PAGE_ACTIVATE", null);
 	}else if (leftDist <= threshold && rightDist <= threshold) {
 	    if(leftDist * distDiff <= rightDist) {
 	  	console.log(" left button pressed2");
           	this.sendSocketNotification("PAGE_INCREMENT", null);
-          	this.sendSocketNotification("PAGE_ACTIVATE", null);
             } else if (rightDist * distDiff <= leftDist) {
 	  	console.log(" right button pressed2");
           	this.sendSocketNotification("PAGE_DECREMENT", null);
-          	this.sendSocketNotification("PAGE_ACTIVATE", null);
 	    }
         }
+      	if (leftDist <= threshold || rightDist <= threshold) {
+          this.sendSocketNotification("PAGE_ACTIVATE", null);
+
+	}
       
     });
 
